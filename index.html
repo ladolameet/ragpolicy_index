@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Eduction Policy AI – Smart Assistant</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712100.png" />
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
+
+        :root {
+            --bg: #ebebeb;
+            --sidebar: #ffffff;
+            --border: #e5e5e5;
+            --text: #111;
+            --user-msg: #d2e3fc;
+            --bot-msg: #ffffff;
+            --accent: #0066cc;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
+        }
+
+        body {
+            background: var(--bg);
+            overflow: hidden;
+            color: var(--text);
+        }
+
+        /* ---------- LAYOUT ---------- */
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Sidebar (desktop visible by default) */
+        aside.sidebar {
+            width: 260px;
+            min-width: 260px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            padding: 18px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.28s ease;
+            z-index: 2000;
+            position: relative;
+        }
+
+        /* collapsed desktop state */
+        aside.sidebar.collapsed {
+            width: 72px;
+            min-width: 72px;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        /* header inside sidebar */
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+
+        .sidebar .brand img {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* chat list area */
+        #chatHistory {
+            overflow: auto;
+            margin-top: 8px;
+            flex: 1;
+        }
+
+        .chat-item {
+            padding: 10px;
+            background: #f7f7f7;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .chat-item:hover {
+            background: #eee
+        }
+
+        .chat-item .title {
+            font-size: 14px;
+            color: #222;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .del-btn {
+            color: red;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: 700
+        }
+
+        .new-chat-btn {
+            margin-top: 12px;
+            padding: 12px;
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* main chat area */
+        main.chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: margin-left .28s;
+        }
+
+        /* topbar (holds toggle button on mobile / desktop) */
+        /* ===== Modern Premium Topbar ===== */
+        .topbar {
+            height: 64px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+
+            background: linear-gradient(90deg, #ffffff 0%, #f7f9fc 100%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(12px);
+
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        /* ===== Premium Toggle Button ===== */
+        .toggle-btn {
+            width: 46px;
+            height: 42px;
+
+            background: linear-gradient(135deg, var(--accent), #0a5ac7);
+            border: none;
+            color: #fff;
+
+            border-radius: 12px;
+            cursor: pointer;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 22px;
+            font-weight: bold;
+
+            transition: all 0.22s ease;
+            box-shadow: 0 6px 18px rgba(11, 102, 209, 0.25);
+        }
+
+        /* Hover + Press Effects */
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(11, 102, 209, 0.35);
+        }
+
+        .toggle-btn:active {
+            transform: translateY(0px) scale(0.96);
+            box-shadow: 0 4px 12px rgba(11, 102, 209, 0.2);
+        }
+
+        /* ===== Topbar Title (Modern typography) ===== */
+        .topbar .title {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.3px;
+            color: var(--accent);
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        /* messages area */
+        .messages {
+            flex: 1;
+            padding: 22px;
+            overflow: auto;
+        }
+
+        .msg {
+            max-width: 750px;
+            padding: 14px 18px 14px 55px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            white-space: pre-wrap;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .msg.user {
+            background: var(--user-msg);
+            margin-left: auto;
+        }
+
+        .msg.bot {
+            background: var(--bot-msg);
+            border: 1px solid var(--border);
+            margin-right: auto;
+        }
+
+        .msg.welcome {
+            background: linear-gradient(180deg, #fff 0%, #f7fbff 100%);
+            border: none;
+            color: #0b3d91;
+            font-weight: 600;
+        }
+
+        .msg::before {
+            content: "";
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border-radius: 50%;
+            background-size: cover;
+        }
+
+        .msg.user::before {
+            background-image: url("https://cdn-icons-png.flaticon.com/512/847/847969.png");
+        }
+
+        .msg.bot::before {
+            background-image: url("https://cdn-icons-png.flaticon.com/512/4712/4712100.png");
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            opacity: .8;
+            font-size: 14px;
+        }
+
+        .action-btn {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* input area */
+        .input-area {
+            padding: 18px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .input-box {
+            width: 65%;
+            background: #fff;
+            padding: 12px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        textarea#userInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 15px;
+            background: transparent;
+            min-height: 36px;
+            max-height: 160px;
+        }
+
+        .send-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        /* overlay + mobile sidebar */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            z-index: 1500;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* mobile adjustments */
+        @media (max-width: 768px) {
+            aside.sidebar {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                height: 100vh;
+                width: 260px;
+                min-width: 260px;
+                padding: 18px 12px;
+                transition: left .28s ease;
+            }
+
+            aside.sidebar.open {
+                left: 0;
+                z-index: 2001;
+                box-shadow: 2px 0 16px rgba(0, 0, 0, .12);
+            }
+
+            aside.sidebar.collapsed {
+                left: -280px;
+            }
+
+            /* collapsed on mobile -> hide */
+            .topbar .title {
+                font-size: 15px
+            }
+
+            .toggle-btn {
+                display: block;
+            }
+
+            .chat-main {
+                margin-left: 0;
+            }
+
+            .input-box {
+                width: 92%;
+            }
+
+            .sidebar .brand .text {
+                display: inline-block;
+            }
+            
+        }
+
+        /* desktop toggle button is visible but smaller */
+        @media (min-width: 769px) {
+            .toggle-btn {
+                display: inline-flex;
+            }
+        }
+
+        /* collapsed sidebar narrow appearance */
+        aside.sidebar.collapsed .brand .text {
+            display: none;
+        }
+
+        aside.sidebar.collapsed #chatHistory {
+            display: none;
+        }
+
+        aside.sidebar.collapsed .new-chat-btn {
+            display: none;
+        }
+        
+        /* small screens - simplify visuals */
+        @media (max-width: 420px) {
+            .input-box {
+                width: 94%;
+                padding: 10px;
+                border-radius: 14px;
+            }
+
+            .messages {
+                padding: 14px;
+            }
+        }
+
+        /* ============================================================
+   MOBILE RESPONSIVE
+============================================================ */
+@media (max-width: 768px) {
+    html, body { font-size: var(--fs-sm); }
+
+    aside.sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100vh;
+        z-index: 3000;
+        transition: left .25s ease;
+    }
+
+    aside.sidebar.open { left: 0; }
+
+    .topbar .title { font-size: 16px; }
+
+    .input-box { width: 92%; }
+
+    .messages { padding: 16px; }
+}
+
+@media (max-width: 420px) {
+    .input-box {
+        width: 95%;
+        padding: 12px;
+    }
+    .messages {
+        padding: 12px;
+    }
+}
+@media (max-width: 420px) {
+    .input-box {
+        width: 95%;
+        padding: 10px;
+        border-radius: 14px;
+    }
+    .messages { padding: 12px; }
+}
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="brand">
+                <img src="https://cdn-icons-png.flaticon.com/512/906/906372.png" alt="logo">
+                <div class="text">Eduction Policy-AI</div>
+            </div>
+
+            <div id="chatHistory" style="margin-top:6px; flex:1; overflow:auto;"></div>
+
+            <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+        </aside>
+
+        <!-- overlay for mobile -->
+        <div id="overlay" class="overlay" onclick="closeMobileSidebar()"></div>
+
+        <!-- Main -->
+        <main class="chat-main" id="chatMain">
+            <div class="topbar">
+                <button id="sidebarToggle" class="toggle-btn" title="Toggle sidebar">☰</button>
+                <div class="title"></div>
+            </div>
+
+            <div class="messages" id="messages"></div>
+
+            <div class="input-area">
+                <div class="input-box">
+                    <textarea id="userInput" placeholder="Type your message..." onkeydown="handleKey(event)"></textarea>
+                    <button class="send-btn" onclick="sendMessage()" title="Send">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path d="M2 21l21-9L2 3v7l15 2-15 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        /* ==========================
+           CONFIG + STATE
+           ========================== */
+        const API_URL = "https://policy-ai-sdn3.onrender.com/chat";
+        const WELCOME_TEXT = "Hi, I’m Eductions Policy Bot. Ask me anything!";
+
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const msg = document.getElementById('messages');
+        const input = document.getElementById('userInput');
+        let chats = JSON.parse(localStorage.getItem("chats") || "{}");
+        let currentChat = null;
+        let lastUserMessage = "";
+
+        /* ==========================
+           SIDEBAR / NAV BEHAVIOR
+           - Desktop: sidebar visible; toggle collapses (compact)
+           - Mobile : sidebar slides in as overlay; toggle opens/closes
+           ========================== */
+
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        // Toggle sidebar
+        sidebarToggle.addEventListener('click', () => {
+            if (isMobile()) {
+                openMobileSidebar();
+            } else {
+                // desktop collapse/expand
+                sidebar.classList.toggle('collapsed');
+            }
+        });
+
+        function openMobileSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+        }
+        function closeMobileSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        // close mobile sidebar on resize to desktop
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                closeMobileSidebar();
+            }
+        });
+
+        /* ==========================
+           CHAT LOGIC (kept from your code)
+           ========================== */
+
+        function handleKey(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function createTitle(text) {
+            if (!text) return "New Chat";
+            let clean = text.trim().replace(/\s+/g, " ");
+            if (clean.length > 25) clean = clean.substring(0, 25) + "...";
+            return clean;
+        }
+
+        function updateTitleIfFirstMessage(msgText) {
+            if (!chats[currentChat]) return;
+            if (chats[currentChat].title === "New Chat") {
+                chats[currentChat].title = createTitle(msgText);
+                saveChats();
+                loadSidebar();
+            }
+        }
+
+        function saveChats() {
+            localStorage.setItem("chats", JSON.stringify(chats));
+        }
+
+        function loadSidebar() {
+            const el = document.getElementById("chatHistory");
+            let html = "";
+            for (let id in chats) {
+                const safeId = encodeURIComponent(id);
+                html += `
+          <div class="chat-item" onclick="loadChat('${safeId}')">
+            <div class="title">${escapeHtml(chats[id].title || 'New Chat')}</div>
+            <div class="del-btn" onclick="deleteChat('${safeId}');event.stopPropagation();">✖</div>
+          </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        function deleteChat(idEncoded) {
+            const id = decodeURIComponent(idEncoded);
+            delete chats[id];
+            saveChats();
+            loadSidebar();
+            if (String(currentChat) === String(id)) {
+                currentChat = null;
+                msg.innerHTML = "";
+            }
+        }
+
+        function newChat() {
+            currentChat = Date.now().toString();
+            chats[currentChat] = { title: "New Chat", html: "" };
+            msg.innerHTML = "";
+            appendWelcomeMessage();
+            saveChats();
+            loadSidebar();
+            // on mobile close sidebar so user sees chat
+            if (isMobile()) closeMobileSidebar();
+        }
+
+        function loadChat(idEncoded) {
+            const id = decodeURIComponent(idEncoded);
+            currentChat = id;
+            msg.innerHTML = chats[id].html || "";
+            const hasAny = msg.querySelectorAll(".msg").length;
+            if (!hasAny) appendWelcomeMessage();
+            msg.scrollTop = msg.scrollHeight;
+            if (isMobile()) closeMobileSidebar();
+        }
+
+        function showTyping() {
+            const div = document.createElement("div");
+            div.className = "msg bot";
+            div.id = "typing";
+            div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+            msg.appendChild(div);
+            msg.scrollTop = msg.scrollHeight;
+        }
+
+        function hideTyping() {
+            const t = document.getElementById("typing");
+            if (t) t.remove();
+        }
+
+        function copyText(text) {
+            try { navigator.clipboard.writeText(text); } catch (e) { /* ignore */ }
+        }
+
+        function appendWelcomeMessage() {
+            const bubble = document.createElement("div");
+            bubble.className = "msg bot welcome";
+            bubble.textContent = WELCOME_TEXT;
+            msg.appendChild(bubble);
+            if (currentChat) {
+                chats[currentChat].html = msg.innerHTML;
+                saveChats();
+                loadSidebar();
+            }
+            msg.scrollTop = msg.scrollHeight;
+        }
+
+        function appendUserBubble(text) {
+            const bubble = document.createElement("div");
+            bubble.className = "msg user";
+            bubble.textContent = text;
+
+            const actions = document.createElement("div");
+            actions.className = "actions";
+
+            const copyBtn = document.createElement("div");
+            copyBtn.className = "action-btn";
+            copyBtn.innerHTML = "📋 <span>Copy</span>";
+            copyBtn.onclick = () => copyText(text);
+
+            const editBtn = document.createElement("div");
+            editBtn.className = "action-btn";
+            editBtn.innerHTML = "✏️ <span>Edit</span>";
+            editBtn.onclick = () => editMessageInline(bubble, text);
+
+            actions.appendChild(copyBtn);
+            actions.appendChild(editBtn);
+
+            bubble.appendChild(actions);
+            msg.appendChild(bubble);
+            msg.scrollTop = msg.scrollHeight;
+
+            if (currentChat) {
+                chats[currentChat].html = msg.innerHTML;
+                saveChats();
+            }
+            return bubble;
+        }
+
+        function appendBotBubble(text, userMsg) {
+            const bubble = document.createElement("div");
+            bubble.className = "msg bot";
+            bubble.textContent = "";
+            msg.appendChild(bubble);
+
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    bubble.textContent = text.substring(0, i + 1);
+                    i++;
+                    msg.scrollTop = msg.scrollHeight;
+                    setTimeout(type, 12);
+                } else {
+                    const actions = document.createElement("div");
+                    actions.className = "actions";
+
+                    const copyBtn = document.createElement("div");
+                    copyBtn.className = "action-btn";
+                    copyBtn.innerHTML = "📋 <span>Copy</span>";
+                    copyBtn.onclick = () => copyText(bubble.innerText || bubble.textContent || "");
+
+                    const regenBtn = document.createElement("div");
+                    regenBtn.className = "action-btn";
+                    regenBtn.innerHTML = "♻️ <span>Regenerate</span>";
+                    regenBtn.onclick = () => regenerate(userMsg, bubble);
+
+                    actions.appendChild(copyBtn);
+                    actions.appendChild(regenBtn);
+                    bubble.appendChild(actions);
+
+                    if (currentChat) {
+                        chats[currentChat].html = msg.innerHTML;
+                        saveChats();
+                    }
+                }
+            }
+            type();
+            msg.scrollTop = msg.scrollHeight;
+        }
+
+        async function editMessageInline(bubble, originalText) {
+            if (bubble.classList.contains("editing")) return;
+            bubble.classList.add("editing");
+            bubble.style.background = "#fff4d9";
+
+            const textarea = document.createElement("textarea");
+            textarea.className = "inline-editor";
+            textarea.value = originalText;
+            textarea.style.width = "95%";
+            textarea.style.height = "70px";
+            textarea.style.padding = "8px";
+            textarea.style.fontSize = "14px";
+            textarea.style.borderRadius = "6px";
+            textarea.style.border = "1px solid #ccc";
+
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "inline-actions";
+
+            const saveBtn = document.createElement("button");
+            saveBtn.className = "save-btn";
+            saveBtn.textContent = "Save & Regenerate";
+
+            const cancelBtn = document.createElement("button");
+            cancelBtn.className = "cancel-btn";
+            cancelBtn.textContent = "Cancel";
+
+            actionsDiv.appendChild(saveBtn);
+            actionsDiv.appendChild(cancelBtn);
+
+            bubble.innerHTML = "";
+            bubble.appendChild(textarea);
+            bubble.appendChild(actionsDiv);
+            textarea.focus();
+
+            saveBtn.onclick = async () => {
+                const newText = textarea.value.trim();
+                if (!newText) return;
+
+                bubble.classList.remove("editing");
+                bubble.innerHTML = "";
+                bubble.textContent = newText;
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                const copyBtn = document.createElement("div");
+                copyBtn.className = "action-btn";
+                copyBtn.innerHTML = "📋 <span>Copy</span>";
+                copyBtn.onclick = () => copyText(newText);
+
+                const editBtn = document.createElement("div");
+                editBtn.className = "action-btn";
+                editBtn.innerHTML = "✏️ <span>Edit</span>";
+                editBtn.onclick = () => editMessageInline(bubble, newText);
+
+                actions.appendChild(copyBtn);
+                actions.appendChild(editBtn);
+                bubble.appendChild(actions);
+
+                if (currentChat) {
+                    chats[currentChat].html = msg.innerHTML;
+                    saveChats();
+                }
+
+                const next = bubble.nextElementSibling;
+                if (next && next.classList.contains("bot")) next.remove();
+
+                showTyping();
+                try {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ query: newText })
+                    });
+                    const data = await res.json();
+                    hideTyping();
+                    appendBotBubble(data.answer || "⚠ Server returned empty.", newText);
+                } catch (err) {
+                    hideTyping();
+                    appendBotBubble("⚠ Server error.", newText);
+                }
+            };
+
+            cancelBtn.onclick = () => {
+                bubble.classList.remove("editing");
+                bubble.innerHTML = originalText;
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                const copyBtn = document.createElement("div");
+                copyBtn.className = "action-btn";
+                copyBtn.innerHTML = "📋 <span>Copy</span>";
+                copyBtn.onclick = () => copyText(originalText);
+
+                const editBtn = document.createElement("div");
+                editBtn.className = "action-btn";
+                editBtn.innerHTML = "✏️ <span>Edit</span>";
+                editBtn.onclick = () => editMessageInline(bubble, originalText);
+
+                actions.appendChild(copyBtn);
+                actions.appendChild(editBtn);
+                bubble.appendChild(actions);
+            };
+        }
+
+        async function regenerate(lastUserMsg, botBubble) {
+            botBubble.remove();
+            showTyping();
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: lastUserMsg })
+                });
+                const data = await res.json();
+                hideTyping();
+                appendBotBubble(data.answer || "⚠ Server returned empty.", lastUserMsg);
+            } catch (err) {
+                hideTyping();
+                appendBotBubble("⚠ Server error.", lastUserMsg);
+            }
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (!currentChat) newChat();
+
+            updateTitleIfFirstMessage(text);
+            lastUserMessage = text;
+
+            appendUserBubble(text);
+            input.value = "";
+            msg.scrollTop = msg.scrollHeight;
+
+            showTyping();
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: text })
+                });
+                const data = await res.json();
+                hideTyping();
+                appendBotBubble(data.answer || "⚠ Server returned empty.", text);
+            } catch (err) {
+                hideTyping();
+                appendBotBubble("⚠ Server error.", text);
+            }
+        }
+
+        /* ==========================
+           INITIALIZE
+           ========================== */
+        function init() {
+            loadSidebar();
+            const ids = Object.keys(chats);
+            if (ids.length) {
+                const last = ids[ids.length - 1];
+                loadChat(encodeURIComponent(last));
+            } else {
+                currentChat = Date.now().toString();
+                chats[currentChat] = { title: "New Chat", html: "" };
+                msg.innerHTML = "";
+                appendWelcomeMessage();
+                saveChats();
+                loadSidebar();
+            }
+        }
+        init();
+
+        /* ==========================
+           HELPERS
+           ========================== */
+
+        // small HTML escape for titles
+        function escapeHtml(s) {
+            if (!s) return "";
+            return s.replace(/[&<>"']/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]; });
+        }
+
+        // close mobile if user clicks outside (already overlay handler)
+        // close sidebar if clicking a chat list item on mobile
+        // (handled inside loadChat/newChat)
+
+    </script>
+</body>
+
+</html>
