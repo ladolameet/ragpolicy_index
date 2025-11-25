@@ -499,6 +499,21 @@
                 display: none !important;
             }
         }
+        /* Fix bottom grey line on mobile sidebar */
+@media (max-width: 768px) {
+    aside.sidebar {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        padding-bottom: 65px !important; /* enough room for New Chat button */
+        background: #ffffff !important;
+    }
+
+    /* completely cover everything behind it */
+    aside.sidebar.open {
+        box-shadow: none !important;
+    }
+}
+
     </style>
 </head>
 
