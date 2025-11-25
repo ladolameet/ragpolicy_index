@@ -445,6 +445,36 @@
     }
     .messages { padding: 12px; }
 }
+/* ------- FIX MOBILE INPUT BAR ------- */
+@media (max-width: 768px) {
+
+    /* allow page to scroll when keyboard appears */
+    body {
+        overflow: auto !important;
+    }
+
+    /* keep input bar visible above keyboard */
+    .input-area {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg);
+        padding: 14px;
+        z-index: 3000;
+    }
+
+    /* input box full width */
+    .input-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto;
+    }
+
+    /* ensure messages area scrolls properly */
+    .messages {
+        padding-bottom: 120px !important;
+    }
+}
+
     </style>
 </head>
 
