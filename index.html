@@ -368,7 +368,7 @@
             .sidebar .brand .text {
                 display: inline-block;
             }
-            
+
         }
 
         /* desktop toggle button is visible but smaller */
@@ -390,7 +390,7 @@
         aside.sidebar.collapsed .new-chat-btn {
             display: none;
         }
-        
+
         /* small screens - simplify visuals */
         @media (max-width: 420px) {
             .input-box {
@@ -407,74 +407,98 @@
         /* ============================================================
    MOBILE RESPONSIVE
 ============================================================ */
-@media (max-width: 768px) {
-    html, body { font-size: var(--fs-sm); }
+        @media (max-width: 768px) {
 
-    aside.sidebar {
-        position: fixed;
-        left: -260px;
-        top: 0;
-        height: 100vh;
-        z-index: 3000;
-        transition: left .25s ease;
-    }
+            html,
+            body {
+                font-size: var(--fs-sm);
+            }
 
-    aside.sidebar.open { left: 0; }
+            aside.sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                height: 100vh;
+                z-index: 3000;
+                transition: left .25s ease;
+            }
 
-    .topbar .title { font-size: 16px; }
+            aside.sidebar.open {
+                left: 0;
+            }
 
-    .input-box { width: 92%; }
+            .topbar .title {
+                font-size: 16px;
+            }
 
-    .messages { padding: 16px; }
-}
+            .input-box {
+                width: 92%;
+            }
 
-@media (max-width: 420px) {
-    .input-box {
-        width: 95%;
-        padding: 12px;
-    }
-    .messages {
-        padding: 12px;
-    }
-}
-@media (max-width: 420px) {
-    .input-box {
-        width: 95%;
-        padding: 10px;
-        border-radius: 14px;
-    }
-    .messages { padding: 12px; }
-}
-/* ------- FIX MOBILE INPUT BAR ------- */
-@media (max-width: 768px) {
+            .messages {
+                padding: 16px;
+            }
+        }
 
-    /* allow page to scroll when keyboard appears */
-    body {
-        overflow: auto !important;
-    }
+        @media (max-width: 420px) {
+            .input-box {
+                width: 95%;
+                padding: 12px;
+            }
 
-    /* keep input bar visible above keyboard */
-    .input-area {
-        position: sticky;
-        bottom: 0;
-        background: var(--bg);
-        padding: 14px;
-        z-index: 3000;
-    }
+            .messages {
+                padding: 12px;
+            }
+        }
 
-    /* input box full width */
-    .input-box {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 auto;
-    }
+        @media (max-width: 420px) {
+            .input-box {
+                width: 95%;
+                padding: 10px;
+                border-radius: 14px;
+            }
 
-    /* ensure messages area scrolls properly */
-    .messages {
-        padding-bottom: 120px !important;
-    }
-}
+            .messages {
+                padding: 12px;
+            }
+        }
 
+        /* ------- FIX MOBILE INPUT BAR ------- */
+        @media (max-width: 768px) {
+
+            /* allow page to scroll when keyboard appears */
+            body {
+                overflow: auto !important;
+            }
+
+            /* keep input bar visible above keyboard */
+            .input-area {
+                position: sticky;
+                bottom: 0;
+                background: var(--bg);
+                padding: 14px;
+                z-index: 3000;
+            }
+
+            /* input box full width */
+            .input-box {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 auto;
+            }
+
+            /* ensure messages area scrolls properly */
+            .messages {
+                padding-bottom: 120px !important;
+            }
+        }
+
+        /* Hide input bar when sidebar opens on mobile */
+        @media (max-width: 768px) {
+            aside.sidebar.open~main .input-area {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -936,9 +960,22 @@
         // close mobile if user clicks outside (already overlay handler)
         // close sidebar if clicking a chat list item on mobile
         // (handled inside loadChat/newChat)
+        function openMobileSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+
+            // hide input when sidebar is open
+            document.querySelector(".input-area").style.display = "none";
+        }
+        function closeMobileSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+
+            // show input again
+            document.querySelector(".input-area").style.display = "flex";
+        }
 
     </script>
 </body>
 
 </html>
-
